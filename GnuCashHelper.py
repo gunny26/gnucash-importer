@@ -155,8 +155,8 @@ class GnuCashHelper(object):
                 sys.exit(1)
             other_name = other_account.get_full_name()
             other_value = other.GetValue()
-            # 01.02.2012;Internet;;36336 00007727621 Walter oder Monika
-            # Schick;Internet FE/000004174;;PSK-Konto;T;;N;15,50 ;;15,50;;;
+            # 01.02.2012;Internet;;36336 00007712341 Walter oder Monika
+            # ;Internet FE/000004174;;PSK-Konto;T;;N;15,50 ;;15,50;;;
             # get transaction to witch split belongs
             # a transaction consists of 1..n splits
             trans = split.parent
