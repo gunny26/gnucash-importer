@@ -1,8 +1,9 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
-# gnucash imports
+"""
+some handy fnction to work with some gnucash file
+"""
 import sys
-import json
 import datetime
 import re
 import logging
@@ -17,6 +18,13 @@ class GnuCashHelper(object):
         self.__book = self.__session.book
 
     def account_from_path(self, top_account, account_path, original_path=None):
+        """
+        return gnucash account object from account path in this notation
+
+        <Account>.<SubAccount>.<SubAccount>
+
+        Accounts are splitted by dots
+        """
         if original_path is None:
             original_path = account_path
         account, account_path = account_path[0], account_path[1:]
@@ -27,22 +35,30 @@ class GnuCashHelper(object):
                 "path " + ''.join(original_path) + " could not be found")
         if len(account_path) > 0:
             return self.account_from_path(account, account_path, original_path)
-        else:
-            return account
+        return account
 
     def lookup_account(self, root, name):
+        """
+        find account by name
+        """
         path = name.split('.')
         return self.lookup_account_by_path(root, path)
 
     def lookup_account_by_path(self, root, path):
+        """
+        return account given path
+        """
         acc = root.lookup_by_name(path[0])
-        if acc.get_instance() == None:
+        if acc.get_instance() is None:
             raise Exception('Account path {} not found'.format('.'.join(path)))
         if len(path) > 1:
             return self.lookup_account_by_path(acc, path[1:])
         return acc
 
     def get_root(self):
+        """
+        return root account
+        """
         return self.__book.get_root_account()
 
     @staticmethod
@@ -87,10 +103,7 @@ class GnuCashHelper(object):
             root_account = self.get_root()
             print(root_account.name)
             orig_account = self.account_from_path(root_account, account_path)
-            # help(orig_account)
-            # print(orig_account)
             print(orig_account.name)
-            # print(orig_account.get_instance())
             print(orig_account.get_full_name())
             for split in orig_account.GetSplitList():
                 other = split.GetOtherSplit()
@@ -103,8 +116,8 @@ class GnuCashHelper(object):
                     sys.exit(1)
                 other_name = other_account.get_full_name()
                 other_value = other.GetValue()
-                # 01.02.2012;Internet;;36336 00007727621 Walter oder Monika
-                # Schick;Internet FE/000004174;;PSK-Konto;T;;N;15,50 ;;15,50;;;
+                # 01.02.2012;Internet;;36336 0000123445 Walter oder Monika
+                # ;Internet FE/000004174;;PSK-Konto;T;;N;15,50 ;;15,50;;;
                 # get transaction to witch split belongs
                 # a transaction consists of 1..n splits
                 trans = split.parent
@@ -112,14 +125,14 @@ class GnuCashHelper(object):
                     print("there are more than 2 accounts involved, not supported")
                     sys.exit(3)
                 csv_line = {
-                 "soll" : orig_account.get_full_name(),
-                 "haben" : other_name,
-                 "date" : str(datetime.date.fromtimestamp(trans.GetDate())),
-                 "description" : str(trans.GetDescription()),
-                 "notes" : str(trans.GetNotes()),
-                 "num" : str(trans.GetNum()),
-                 "soll_value" : str(split.GetValue()),
-                 "haben_value" : str(other_value),
+                    "soll" : orig_account.get_full_name(),
+                    "haben" : other_name,
+                    "date" : str(datetime.date.fromtimestamp(trans.GetDate())),
+                    "description" : str(trans.GetDescription()),
+                    "notes" : str(trans.GetNotes()),
+                    "num" : str(trans.GetNum()),
+                    "soll_value" : str(split.GetValue()),
+                    "haben_value" : str(other_value),
                 }
                 yield csv_line
                 #print(json.dumps(csv_line, indent=4))
@@ -139,10 +152,7 @@ class GnuCashHelper(object):
             root_account = self.get_root()
             print(root_account.name)
             orig_account = self.account_from_path(root_account, account_path)
-            # help(orig_account)
-            # print(orig_account)
             print(orig_account.name)
-            # print(orig_account.get_instance())
             print(orig_account.get_full_name())
             split = orig_account.GetSplitList()[-1]
             other = split.GetOtherSplit()
@@ -164,14 +174,14 @@ class GnuCashHelper(object):
                 print("there are more than 2 accounts involved, not supported")
                 sys.exit(3)
             csv_line = {
-             "soll" : orig_account.get_full_name(),
-             "haben" : other_name,
-             "date" : str(datetime.date.fromtimestamp(trans.GetDate())),
-             "description" : str(trans.GetDescription()),
-             "notes" : str(trans.GetNotes()),
-             "num" : str(trans.GetNum()),
-             "soll_value" : str(split.GetValue()),
-             "haben_value" : str(other_value),
+                "soll" : orig_account.get_full_name(),
+                "haben" : other_name,
+                "date" : str(datetime.date.fromtimestamp(trans.GetDate())),
+                "description" : str(trans.GetDescription()),
+                "notes" : str(trans.GetNotes()),
+                "num" : str(trans.GetNum()),
+                "soll_value" : str(split.GetValue()),
+                "haben_value" : str(other_value),
             }
             return csv_line
         except Exception as exc:
@@ -193,7 +203,6 @@ class GnuCashHelper(object):
         currency = commod_tab.lookup('ISO4217', "EUR")
         logging.info('Adding transaction for account "%s" (%s %s)..', item["soll"], item["soll_value"],
                      currency.get_mnemonic())
-        root = self.__book.get_root_account()
         tx = Transaction(self.__book)
         tx.BeginEdit()
         tx.SetCurrency(currency)
@@ -204,7 +213,6 @@ class GnuCashHelper(object):
         if "num" in item.keys():
             tx.SetNum(item["num"])
         # soll
-        #acc = self.lookup_account(root, item["soll"])
         acc = self.account_from_path(self.get_root(), item["soll"].split("."))
         s1 = Split(self.__book)
         s1.SetParent(tx)
@@ -213,7 +221,6 @@ class GnuCashHelper(object):
         s1.SetValue(GncNumeric(amount, currency.get_fraction()))
         s1.SetAmount(GncNumeric(amount, currency.get_fraction()))
         # haben
-        # acc2 = self.lookup_account(root, item["haben"])
         acc2 = self.account_from_path(self.get_root(), item["haben"].split("."))
         s2 = Split(self.__book)
         s2.SetParent(tx)
@@ -224,12 +231,8 @@ class GnuCashHelper(object):
         tx.CommitEdit()
 
     def end(self):
-        """should be always called to prevent locking"""
+        """
+        should be always called to prevent locking
+        TODO: maybe there is some better way to implement this
+        """
         self.__session.end()
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    gch = GnuCashHelper("gnucash_sqlite/psk_konto_sqlite.gnucash")
-    for entry in gch.gnucash_export("Aufwendungen.Büro & Bücher.LIBRO"):
-        print(json.dumps(entry, indent=4))
-    gch.end()

@@ -1,4 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+"""
+categorizes some data according to input tokens
+- first must be trained
+"""
 import math
 
 def activation_function_custom(value):
@@ -10,6 +14,9 @@ def activation_function_logistic(value):
     return 1 / (1 + math.e ** (-value))
 
 class Categorizer(object):
+    """
+    Categorizer to use in Network
+    """
 
     def __init__(self, category, level=0.8, activation_function=activation_function_logistic):
         """
@@ -90,7 +97,6 @@ class Categorizer(object):
         calculate actual value, and discard tokens below some threshold
         tokens with value below some threshold will be removed
         """
-        total = sum(self.__data.values())
         for token in list(self.__data.keys()):
             # thats the activation function
             # go to https://en.wikipedia.org/wiki/Activation_function
@@ -114,8 +120,7 @@ class Categorizer(object):
                 token_found = True
         if token_found is True:
             return 1 / (1 + 2.71828 ** (1 / result))
-        else:
-            return 0.0
+        return 0.0
 
     def stats(self):
         """

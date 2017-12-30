@@ -1,5 +1,7 @@
 #!/usr/bin/python3
-import re
+"""
+learning Network
+"""
 import json
 # own modules
 from Categorizer import Categorizer as Categorizer
@@ -34,7 +36,7 @@ class Network(object):
         return possible category for given tokens
         """
         results = {}
-        for category in self.categorizers.keys():
+        for category in self.categorizers:
             results[self.categorizers[category].predict(tokens)] = category
         max_result = max(results.keys())
         return max_result, results[max_result]
@@ -70,8 +72,8 @@ class Network(object):
         dump network states to json format
         """
         data = {}
-        for c in self.categorizers.values():
-            data[c.category] = c.to_data()
+        for categorizer in self.categorizers.values():
+            data[categorizer.category] = categorizer.to_data()
         return json.dumps(data, indent=4, sort_keys=True)
 
     @classmethod
